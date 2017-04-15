@@ -35,7 +35,16 @@ impl IntoReader for String {
 impl IntoReader for Vec<u8> {
     type Reader = BytesReader;
 
-    fn into_reader (self) -> BytesReader { BytesReader::new (self) }
+    fn into_reader (self) -> BytesReader {
+        let s = String::from_utf8 (self);
+
+        let bytes = match s {
+            Ok (s) => s.into_bytes (),
+            Err ( _ ) => Vec::new ()
+        };
+
+        BytesReader::new (bytes)
+    }
 }
 
 
