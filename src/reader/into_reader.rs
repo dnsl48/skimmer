@@ -1,4 +1,10 @@
-use reader::{ Read, BytesReader, SliceReader };
+use reader::{ Read, BytesReader, SliceReader, IoreadeofReader };
+
+use std::fs;
+use std::io;
+use std::net;
+use std::os::unix::net::UnixStream;
+
 
 
 
@@ -33,43 +39,78 @@ impl IntoReader for Vec<u8> {
 }
 
 
-
-/*
 impl IntoReader for fs::File {
-    type Reader = StreamReader<io::BufReader<fs::File>>;
+    type Reader = IoreadeofReader;
 
-    fn into_reader (self) -> Self::Reader { io::BufReader::new (self).into_reader () }
+    fn into_reader (self) -> IoreadeofReader { IoreadeofReader::new (self) }
 }
 
+
+impl<'a> IntoReader for &'a fs::File {
+    type Reader = IoreadeofReader;
+
+    fn into_reader (self) -> IoreadeofReader { IoreadeofReader::new (self) }
+}
+
+
+impl IntoReader for net::TcpStream {
+    type Reader = IoreadeofReader;
+
+    fn into_reader (self) -> IoreadeofReader { IoreadeofReader::new (self) }
+}
+
+
+impl<'a> IntoReader for &'a net::TcpStream {
+    type Reader = IoreadeofReader;
+
+    fn into_reader (self) -> IoreadeofReader { IoreadeofReader::new (self) }
+}
+
+
+impl IntoReader for UnixStream {
+    type Reader = IoreadeofReader;
+
+    fn into_reader (self) -> IoreadeofReader { IoreadeofReader::new (self) }
+}
+
+
+impl<'a> IntoReader for &'a UnixStream {
+    type Reader = IoreadeofReader;
+
+    fn into_reader (self) -> IoreadeofReader { IoreadeofReader::new (self) }
+}
 
 
 impl<R> IntoReader for io::BufReader<R> where R: io::Read {
-    type Reader = StreamReader<io::BufReader<R>>;
+    type Reader = IoreadeofReader;
 
-    fn into_reader (self) -> StreamReader<io::BufReader<R>> { StreamReader::new (self) }
+    fn into_reader (self) -> IoreadeofReader { IoreadeofReader::new (self) }
 }
 
 
+impl<T> IntoReader for io::Cursor<T> where T: AsRef<[u8]> {
+    type Reader = IoreadeofReader;
 
-impl IntoReader for &'static str {
-    type Reader = SliceReader<'static>;
-
-    fn into_reader (self) -> SliceReader<'static> { SliceReader::new (self.as_bytes ()) }
+    fn into_reader (self) -> IoreadeofReader { IoreadeofReader::new (self) }
 }
 
 
+impl<'a, R> IntoReader for &'a mut R where R: io::Read + ?Sized {
+    type Reader = IoreadeofReader;
 
-impl IntoReader for String {
-    type Reader = BytesReader;
-
-    fn into_reader (self) -> BytesReader { BytesReader::new (self.into_bytes ()) }
+    fn into_reader (self) -> IoreadeofReader { IoreadeofReader::new (self) }
 }
 
 
+impl<R> IntoReader for Box<R> where R: io::Read + ?Sized {
+    type Reader = IoreadeofReader;
 
-impl IntoReader for Vec<u8> {
-    type Reader = BytesReader;
-
-    fn into_reader (self) -> BytesReader { BytesReader::new (self) }
+    fn into_reader (self) -> IoreadeofReader { IoreadeofReader::new (self) }
 }
-*/
+
+
+impl<'a> IntoReader for &'a [u8] {
+    type Reader = IoreadeofReader;
+
+    fn into_reader (self) -> IoreadeofReader { IoreadeofReader::new (self) }
+}

@@ -2,39 +2,55 @@ use data::Datum;
 use marker::Marker;
 use reader::Read;
 
+use std::io;
+use std::rc::Rc;
 
 
 
 #[derive (Clone, Debug)]
-pub struct SliceDatum {
-    content: &'static [u8]
+pub struct IoreadeofDatum {
+    content: Rc<Vec<u8>>
 }
 
 
 
-pub struct SliceReader {
-    pub pointer: usize,
-    pub content: SliceDatum
+impl Datum for IoreadeofDatum {
+    fn len (&self) -> usize { Vec::len (&*self.content) }
+
+    fn as_slice (&self) -> &[u8] { Vec::as_slice (&*self.content) }
 }
 
 
 
-impl SliceReader {
-    pub fn new (slice: &'static [u8]) -> SliceReader {
-        SliceReader {
+pub struct IoreadeofReader {
+    pointer: usize,
+    content: IoreadeofDatum
+}
+
+
+
+impl IoreadeofReader {
+    pub fn new<R> (mut data: R) -> IoreadeofReader where R: io::Read {
+        let mut buf = String::with_capacity (32 * 1024);
+
+        match data.read_to_string (&mut buf) {
+            Ok (_) => (),
+            Err ( _ ) => { buf = String::with_capacity (0); }
+        };
+
+        IoreadeofReader {
             pointer: 0,
-            content: SliceDatum { content: slice }
+            content: IoreadeofDatum { content: Rc::new (buf.into_bytes ()) }
         }
     }
 }
 
 
 
-impl Read for SliceReader {
-    type Datum = SliceDatum;
+impl Read for IoreadeofReader {
+    type Datum = IoreadeofDatum;
 
 
-    #[inline (always)]
     fn consume (&mut self, len: u8) -> Marker {
         let len = self.skip (len);
         Marker::new ((0, self.pointer - len as usize), (0, self.pointer))
@@ -45,20 +61,20 @@ impl Read for SliceReader {
         Marker::new ((0, self.pointer - len), (0, self.pointer))
     }
 
-
-    fn get_datum (&mut self, index: usize) -> Option<SliceDatum> {
+    #[inline (always)]
+    fn get_datum (&mut self, index: usize) -> Option<IoreadeofDatum> {
         if index == 0 { Some ( self.content.clone () ) } else { None }
     }
 
 
     fn skip (&mut self, len: u8) -> u8 {
-        if self.pointer < self.content.content.len () {
-            if self.pointer + (len as usize) < self.content.content.len () {
+        if self.pointer < self.content.len () {
+            if self.pointer + (len as usize) < self.content.len () {
                 self.pointer += len as usize;
                 len
 
             } else {
-                let len = self.content.content.len () - self.pointer;
+                let len = self.content.len () - self.pointer;
                 self.pointer += len;
 
                 len as u8
@@ -68,13 +84,13 @@ impl Read for SliceReader {
 
 
     fn skip_long (&mut self, len: usize) -> usize {
-        if self.pointer < self.content.content.len () {
-            if self.pointer + len < self.content.content.len () {
+        if self.pointer < self.content.len () {
+            if self.pointer + len < self.content.len () {
                 self.pointer += len;
                 len
 
             } else {
-                let len = self.content.content.len () - self.pointer;
+                let len = self.content.len () - self.pointer;
                 self.pointer += len;
 
                 len
@@ -84,10 +100,10 @@ impl Read for SliceReader {
 
 
     #[inline (always)]
-    fn has (&mut self, len: u8) -> bool { self.pointer + len as usize <= self.content.content.len () }
+    fn has (&mut self, len: u8) -> bool { self.pointer + len as usize <= self.content.len () }
 
     #[inline (always)]
-    fn has_long (&mut self, len: usize) -> bool { self.pointer + len <= self.content.content.len () }
+    fn has_long (&mut self, len: usize) -> bool { self.pointer + len <= self.content.len () }
 
     #[inline (always)]
     fn byte_at_start (&mut self, byte: u8) -> bool { self.content.content.get (self.pointer) == Some (&byte) }
@@ -145,14 +161,4 @@ impl Read for SliceReader {
 
     #[inline (always)]
     fn get_bytes_4_at_start (&mut self) -> Option<(u8, u8, u8, u8)> { self.content.content.get (self.pointer .. self.pointer + 4).map (|ref bs| (bs[0], bs[1], bs[2], bs[3])) }
-}
-
-
-
-impl Datum for SliceDatum {
-    #[inline (always)]
-    fn len (&self) -> usize { <[u8]>::len (self.content) }
-
-    #[inline (always)]
-    fn as_slice (&self) -> &[u8] { self.content }
 }

@@ -1,34 +1,70 @@
 pub mod into_reader;
 pub mod slice_reader;
 pub mod bytes_reader;
+pub mod ioreadeof_reader;
 
 pub use self::into_reader::IntoReader;
 pub use self::slice_reader::SliceReader;
 pub use self::bytes_reader::BytesReader;
+pub use self::ioreadeof_reader::IoreadeofReader;
 
 
-use data::Datum;
 use marker::Marker;
-use symbol::{ Symbol, CopySymbol };
-
-use std::sync::Arc;
 
 
 
 pub trait Read {
-    fn has (&mut self, len: usize) -> bool;
+    type Datum;
 
-    fn skip (&mut self, len: usize) -> usize;
+    fn has (&mut self, len: u8) -> bool;
 
-    fn contains_at<S: Symbol> (&mut self, symbol: &S, at: usize) -> bool;
+    fn has_long (&mut self, len: usize) -> bool;
 
-    fn contains_copy_at<S: CopySymbol> (&mut self, symbol: S, at: usize) -> bool;
+    fn skip (&mut self, len: u8) -> u8;
 
-    fn contains_copy_at_start<S: CopySymbol> (&mut self, symbol: S) -> bool;
+    fn skip_long (&mut self, len: usize) -> usize;
 
-    fn consume (&mut self, len: usize) -> Marker;
+    fn byte_at (&mut self, byte: u8, at: usize) -> bool;
 
-    fn get_datum (&mut self, index: usize) -> Option<Arc<Datum>>;
+    fn byte_at_start (&mut self, byte: u8) -> bool;
+
+    fn bytes_2_at (&mut self, bytes: [u8; 2], at: usize) -> bool;
+
+    fn bytes_2_at_start (&mut self, bytes: [u8; 2]) -> bool;
+
+    fn bytes_3_at (&mut self, bytes: [u8; 3], at: usize) -> bool;
+
+    fn bytes_3_at_start (&mut self, bytes: [u8; 3]) -> bool;
+
+    fn bytes_4_at (&mut self, bytes: [u8; 4], at: usize) -> bool;
+
+    fn bytes_4_at_start (&mut self, bytes: [u8; 4]) -> bool;
+
+    fn bytes_at (&mut self, bytes: &[u8], at: usize) -> bool;
+
+    fn bytes_at_start (&mut self, bytes: &[u8]) -> bool;
+
+    fn get_byte_at (&mut self, at: usize) -> Option<u8>;
+
+    fn get_byte_at_start (&mut self) -> Option<u8>;
+
+    fn get_bytes_2_at (&mut self, at: usize) -> Option<(u8, u8)>;
+
+    fn get_bytes_2_at_start (&mut self) -> Option<(u8, u8)>;
+
+    fn get_bytes_3_at (&mut self, at: usize) -> Option<(u8, u8, u8)>;
+
+    fn get_bytes_3_at_start (&mut self) -> Option<(u8, u8, u8)>;
+
+    fn get_bytes_4_at (&mut self, at: usize) -> Option<(u8, u8, u8, u8)>;
+
+    fn get_bytes_4_at_start (&mut self) -> Option<(u8, u8, u8, u8)>;
+
+    fn consume (&mut self, len: u8) -> Marker;
+
+    fn consume_long (&mut self, len: usize) -> Marker;
+
+    fn get_datum (&mut self, index: usize) -> Option<Self::Datum>;
 
     fn slice (&mut self, len: usize) -> Option<&[u8]> { self.slice_at (0, len) }
 

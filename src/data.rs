@@ -1,10 +1,10 @@
 use marker::Marker;
 
-use std::sync::Arc;
+// use std::sync::Arc;
 use std::fmt::Debug;
 
 
-pub trait Datum : Sync + Send + Debug {
+pub trait Datum : Clone + Debug {
     fn len (&self) -> usize;
 
     fn as_slice (&self) -> &[u8];
@@ -13,20 +13,23 @@ pub trait Datum : Sync + Send + Debug {
 
 
 
-pub struct Data {
-    data: Vec<Arc<Datum>>
+pub struct Data<Datum> {
+    data: Vec<Datum>
 }
 
 
 
-impl Data {
-    pub fn with_capacity (size: usize) -> Data { Data { data: Vec::with_capacity (size) } }
+impl<D> Data<D>
+  where
+    D: Datum
+{
+    pub fn with_capacity (size: usize) -> Data<D> { Data { data: Vec::with_capacity (size) } }
 
     pub fn clear (&mut self) { self.data.clear () }
 
     pub fn amount (&self) -> usize { self.data.len () }
 
-    pub fn push (&mut self, datum: Arc<Datum>) { self.data.push (datum) }
+    pub fn push (&mut self, datum: D) { self.data.push (datum) }
 
     pub fn marker_len (&self, marker: &Marker) -> usize {
         if marker.pos1.0 == marker.pos2.0 { marker.pos2.1 - marker.pos1.1 } else {
