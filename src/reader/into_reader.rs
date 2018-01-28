@@ -3,7 +3,7 @@ use reader::{ Read, BytesReader, SliceReader, IoreadeofReader };
 use std::fs;
 use std::io;
 use std::net;
-use std::os::unix::net::UnixStream;
+#[cfg(unix)] use std::os::unix::net::UnixStream;
 
 
 
@@ -76,6 +76,7 @@ impl<'a> IntoReader for &'a net::TcpStream {
 }
 
 
+#[cfg(unix)]
 impl IntoReader for UnixStream {
     type Reader = IoreadeofReader;
 
@@ -83,6 +84,7 @@ impl IntoReader for UnixStream {
 }
 
 
+#[cfg(unix)]
 impl<'a> IntoReader for &'a UnixStream {
     type Reader = IoreadeofReader;
 
